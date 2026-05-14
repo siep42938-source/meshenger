@@ -85,7 +85,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenMenu, onNewChat }) => 
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--color-bg)' }}>
+    <div className="flex flex-col h-full">
 
       {/* Header */}
       <div

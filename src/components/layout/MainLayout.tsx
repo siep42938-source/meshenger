@@ -41,7 +41,7 @@ export const MainLayout: React.FC = () => {
     <div className="flex h-full w-full overflow-hidden" style={{ background: 'var(--color-bg)' }}>
 
       {/* Sidebar */}
-      <div className={`${activeChatId && isMobile ? 'hidden' : 'flex'} lg:flex flex-col w-full lg:w-80 xl:w-96 flex-shrink-0 border-r border-white/[0.05] relative overflow-hidden`}>
+      <div className={`${activeChatId && isMobile ? 'hidden' : 'flex'} lg:flex flex-col w-full lg:w-80 xl:w-96 flex-shrink-0 relative overflow-hidden sidebar-bg`}>
         <ChatList
           onOpenMenu={() => setShowMenu(true)}
           onNewChat={() => setShowNewChat(true)}
@@ -49,7 +49,7 @@ export const MainLayout: React.FC = () => {
       </div>
 
       {/* Main area */}
-      <div className={`${!activeChatId && isMobile ? 'hidden' : 'flex'} lg:flex flex-col flex-1 min-w-0 relative`}>
+      <div className={`${!activeChatId && isMobile ? 'hidden' : 'flex'} lg:flex flex-col flex-1 min-w-0 relative chat-bg`}>
         <AnimatePresence mode="wait">
           {activeChatId ? (
             <motion.div key={activeChatId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="absolute inset-0">
