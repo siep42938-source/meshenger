@@ -368,7 +368,7 @@ app.post('/api/verify-otp', (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 app.post('/api/register', (req, res) => {
   const ip = getIp(req)
-  const { phone, name } = req.body
+  const { phone, name, username } = req.body
   if (!phone || !name?.trim()) return res.status(400).json({ error: 'Укажите phone и name' })
 
   const normalized = '+' + phone.replace(/\D/g, '')
@@ -379,10 +379,11 @@ app.post('/api/register', (req, res) => {
 
   try {
     const user  = db.createUser(normalized, name.trim())
+    // Сохраняем username если передан
+    if (username) db.updateUser(normalized, { username: username.toLowerCase().replace(/[^a-z0-9_]/g, '') })
     const token = db.createSession(user.id, normalized, ip)
-    // Уведомляем тебя о новом пользователе
     tgSend(ADMIN_CHAT_ID, `🎉 НОВЫЙ ПОЛЬЗОВАТЕЛЬ\n\n📱 ${normalized}\n👤 ${name.trim()}\n🌐 IP: ${ip}`)
-    return res.json({ success: true, token, user })
+    return res.json({ success: true, token, user: { ...user, username } })
   } catch (e) {
     return res.status(409).json({ error: e.message })
   }
@@ -467,6 +468,16 @@ app.post('/api/link-telegram', requireAuth, async (req, res) => {
 })
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
+
+// ─── Search users ─────────────────────────────────────────────────────────────
+app.get('/api/users/search', requireAuth, (req, res) => {
+  const { q } = req.query
+  if (!q || String(q).trim().length < 2) {
+    return res.json({ users: [] })
+  }
+  const results = db.searchUsers(String(q), req.session.phone)
+  res.json({ users: results })
+})
 
 const PORT = process.env.PORT || 3001
 const httpServer = createServer(app)

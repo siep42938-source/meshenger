@@ -169,9 +169,34 @@ function recordSuccessfulLogin(phone, ip) {
   })
 }
 
+// ─── Search users ─────────────────────────────────────────────────────────────
+
+function searchUsers(query, excludePhone) {
+  const db = load()
+  const q = query.toLowerCase().replace('@', '').trim()
+  if (!q || q.length < 2) return []
+  return Object.values(db.users)
+    .filter(u => {
+      if (u.phone === excludePhone) return false
+      const nameMatch = u.name?.toLowerCase().includes(q)
+      const phoneMatch = u.phone?.includes(q)
+      const usernameMatch = u.username?.toLowerCase().includes(q)
+      return nameMatch || phoneMatch || usernameMatch
+    })
+    .slice(0, 20)
+    .map(u => ({
+      id: u.id,
+      name: u.name,
+      username: u.username || null,
+      phone: u.phone,
+      avatarColor: u.avatarColor || '#7c3aed',
+    }))
+}
+
 module.exports = {
   getUser, createUser, updateUser, isPhoneRegistered,
   saveOtp, getOtp, deleteOtp, incrementOtpAttempts,
   createSession, getSession, deleteSession, getUserSessions,
   recordFailedLogin, isAccountLocked, recordSuccessfulLogin,
+  searchUsers,
 }
