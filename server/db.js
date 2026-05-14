@@ -173,13 +173,16 @@ function recordSuccessfulLogin(phone, ip) {
 
 function searchUsers(query, excludePhone) {
   const db = load()
-  const q = query.toLowerCase().replace('@', '').trim()
+  const q = query.toLowerCase().replace('@', '').replace(/[\s\-()]/g, '').trim()
   if (!q || q.length < 2) return []
   return Object.values(db.users)
     .filter(u => {
       if (u.phone === excludePhone) return false
       const nameMatch = u.name?.toLowerCase().includes(q)
-      const phoneMatch = u.phone?.includes(q)
+      // Нормализуем телефон для поиска — убираем все нецифровые символы
+      const normalizedPhone = (u.phone || '').replace(/\D/g, '')
+      const normalizedQuery = q.replace(/\D/g, '')
+      const phoneMatch = normalizedQuery.length >= 4 && normalizedPhone.includes(normalizedQuery)
       const usernameMatch = u.username?.toLowerCase().includes(q)
       return nameMatch || phoneMatch || usernameMatch
     })
