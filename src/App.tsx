@@ -18,6 +18,9 @@ export default function App() {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
+      {/* Animated background */}
+      <div className="app-bg" />
+
       <AnimatePresence mode="wait">
         {auth.step === 'done' ? (
           <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-hidden">
@@ -25,8 +28,11 @@ export default function App() {
           </motion.div>
         ) : (
           <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 relative overflow-hidden">
-            <div className="absolute inset-0" style={{ background: 'var(--color-bg)' }} />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)' }} />
+            {/* Auth glow orbs */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+            <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(26,92,255,0.08) 0%, transparent 70%)', filter: 'blur(40px)' }} />
             <div className="relative h-full">
               <AnimatePresence mode="wait">
                 {auth.step === 'phone'   && <PhoneScreen   key="phone" />}
@@ -38,7 +44,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Call overlay — поверх всего */}
       <AnimatePresence>
         {call.active && <CallScreen key="call" />}
       </AnimatePresence>

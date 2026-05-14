@@ -11,13 +11,19 @@ const app = express()
 app.use(express.json())
 // В продакшене разрешаем APP_URL, в разработке — localhost
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.APP_URL].filter(Boolean)
+  ? [
+      process.env.APP_URL,
+      'https://meshenger-black.vercel.app',
+      // Разрешаем все поддомены vercel.app для preview деплоев
+    ].filter(Boolean)
   : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173']
 
 app.use(cors({
   origin: (origin, callback) => {
     // Разрешаем запросы без origin (мобильные PWA, Postman)
     if (!origin) return callback(null, true)
+    // Разрешаем все vercel.app домены (preview деплои)
+    if (origin.endsWith('.vercel.app')) return callback(null, true)
     if (allowedOrigins.includes(origin)) return callback(null, true)
     callback(new Error('CORS: origin not allowed'))
   },
@@ -483,7 +489,12 @@ const PORT = process.env.PORT || 3001
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true)
+      if (origin.endsWith('.vercel.app')) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error('CORS: origin not allowed'))
+    },
     credentials: true,
   },
 })
@@ -505,22 +516,53 @@ io.on('connection', (socket) => {
   console.log(`✅ Пользователь подключен: ${socket.phone} (${socket.id})`)
   userSockets.set(socket.userId, socket.id)
 
+  // Уведомляем всех что пользователь онлайн
+  socket.broadcast.emit('user:online', { userId: socket.userId })
+
   // Отправить сообщение
   socket.on('message:send', (data) => {
-    const { chatId, message } = data
+    const { chatId, message, recipientId } = data
     console.log(`💬 Сообщение от ${socket.phone}: ${message}`)
     
     // Сохраняем в БД
     db.saveMessage(chatId, socket.userId, message)
     
-    // Отправляем всем в чате
-    io.to(chatId).emit('message:receive', {
+    // Отправляем отправителю подтверждение
+    socket.emit('message:receive', {
       chatId,
       userId: socket.userId,
       phone: socket.phone,
       message,
       timestamp: new Date(),
+      status: 'sent',
     })
+
+    // Отправляем получателю если онлайн
+    if (recipientId) {
+      const recipientSocketId = userSockets.get(recipientId)
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit('message:receive', {
+          chatId,
+          userId: socket.userId,
+          phone: socket.phone,
+          message,
+          timestamp: new Date(),
+          status: 'delivered',
+        })
+        // Уведомляем отправителя о доставке
+        socket.emit('message:delivered', { chatId, userId: socket.userId })
+      }
+    } else {
+      // Групповой чат — отправляем всем в комнате кроме отправителя
+      socket.to(chatId).emit('message:receive', {
+        chatId,
+        userId: socket.userId,
+        phone: socket.phone,
+        message,
+        timestamp: new Date(),
+        status: 'delivered',
+      })
+    }
   })
 
   // Присоединиться к чату
@@ -584,6 +626,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`❌ Пользователь отключен: ${socket.phone}`)
     userSockets.delete(socket.userId)
+    // Уведомляем всех что пользователь офлайн
+    socket.broadcast.emit('user:offline', { userId: socket.userId })
   })
 })
 

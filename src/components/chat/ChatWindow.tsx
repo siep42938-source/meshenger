@@ -10,6 +10,7 @@ import { Avatar } from '../ui/Avatar'
 import { MessageStatus } from '../ui/MessageStatus'
 import { NetworkBadge } from '../ui/NetworkBadge'
 import { formatTime, formatChatDate } from '../../utils/format'
+import { socketService } from '../../services/socketService'
 import type { Chat, Message } from '../../types'
 import clsx from 'clsx'
 
@@ -69,7 +70,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const handleSend = () => {
     const trimmed = text.trim()
     if (!trimmed || isReadOnly) return
+
+    // Добавляем локально
     sendMessage(chatId, trimmed, currentUser?.id ?? 'me')
+
+    // Отправляем через WebSocket если подключены
+    if (socketService.isConnected()) {
+      const otherId = chat.participants.find(p => p !== 'me' && p !== currentUser?.id)
+      socketService.sendMessage(chatId, trimmed, otherId || '')
+    }
+
     setText('')
     inputRef.current?.focus()
   }
@@ -99,7 +109,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   return (
     <div className="flex flex-col h-full bg-surface-950">
       {/* Header */}
-      <div className="glass border-b border-surface-800/50 px-3 py-2.5 safe-top">
+      <div className="glass border-b border-white/[0.05] px-3 py-2.5 safe-top flex-shrink-0">
         <div className="flex items-center gap-2">
           {/* Back (mobile) */}
           <button onClick={onBack} className="btn-ghost p-2 -ml-1 lg:hidden">
@@ -129,9 +139,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             <div className="min-w-0">
               <p className="font-semibold text-white text-sm truncate">{name}</p>
               <p className={clsx(
-                'text-xs truncate',
-                subtitle === 'в сети' ? 'text-primary-400' : 'text-surface-400'
+                'text-xs truncate transition-colors',
+                subtitle === 'в сети' ? 'text-emerald-400' : 'text-white/35'
               )}>
+                {subtitle === 'в сети' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse" />}
                 {subtitle}
               </p>
             </div>
@@ -148,62 +159,44 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
             <button className="btn-ghost p-2"><MoreVertical size={18} /></button>
           </div>
         </div>
-
-        {/* Network indicator */}
-        <div className="flex items-center gap-2 mt-1.5 px-1">
-          <NetworkBadge mode={networkMode} />
-          {isReadOnly && (
-            <span className="flex items-center gap-1 text-[10px] text-surface-500">
-              <Lock size={9} /> Только чтение
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 chat-bg">
         {grouped.map(group => (
           <div key={group.date}>
-            {/* Date separator */}
-            <div className="flex items-center justify-center my-4">
-              <span className="glass-light text-surface-400 text-xs px-3 py-1 rounded-full">
+            <div className="flex items-center justify-center my-3">
+              <span className="glass text-white/40 text-xs px-3 py-1 rounded-full">
                 {group.date}
               </span>
             </div>
 
             {group.messages.map((msg, i) => {
               const isMe = msg.senderId === 'me' || msg.senderId === currentUser?.id
-              const isSystem = msg.senderId === 'umbrella'
-              const showAvatar = !isMe && i === 0 ||
-                (!isMe && group.messages[i - 1]?.senderId !== msg.senderId)
+              const isSystem = msg.senderId === 'umbrella' || msg.senderId === 'system'
+              const showAvatar = !isMe && (i === 0 || group.messages[i - 1]?.senderId !== msg.senderId)
 
               return (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
                   className={clsx(
-                    'flex items-end gap-2 mb-1',
+                    'flex items-end gap-2 mb-0.5',
                     isMe ? 'justify-end' : 'justify-start',
                     isSystem && 'justify-center'
                   )}
                 >
-                  {/* System message */}
                   {isSystem ? (
-                    <div className="glass rounded-2xl px-4 py-3 max-w-[85%] text-center">
-                      <p className="text-surface-200 text-sm whitespace-pre-line leading-relaxed">
-                        {msg.text}
-                      </p>
-                      <p className="text-surface-500 text-[10px] mt-1.5">
-                        {formatTime(new Date(msg.timestamp))}
-                      </p>
+                    <div className="glass rounded-2xl px-4 py-2.5 max-w-[85%] text-center">
+                      <p className="text-white/70 text-sm whitespace-pre-line leading-relaxed">{msg.text}</p>
+                      <p className="text-white/30 text-[10px] mt-1">{formatTime(new Date(msg.timestamp))}</p>
                     </div>
                   ) : (
                     <>
-                      {/* Incoming avatar */}
                       {!isMe && (
-                        <div className="w-7 flex-shrink-0">
+                        <div className="w-7 flex-shrink-0 mb-1">
                           {showAvatar && (
                             <Avatar
                               name={contacts.find(c => c.id === msg.senderId)?.name ?? '?'}
@@ -213,29 +206,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                           )}
                         </div>
                       )}
-
-                      {/* Bubble */}
-                      <div className={clsx(
-                        'group relative',
-                        isMe ? 'message-out' : 'message-in'
-                      )}>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                          {msg.text}
-                        </p>
-                        <div className={clsx(
-                          'flex items-center gap-1 mt-1',
-                          isMe ? 'justify-end' : 'justify-start'
-                        )}>
-                          <span className={clsx(
-                            'text-[10px]',
-                            isMe ? 'text-white/50' : 'text-surface-500'
-                          )}>
+                      <div className={clsx(isMe ? 'message-out' : 'message-in')}>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
+                        <div className={clsx('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
+                          <span className={clsx('text-[10px]', isMe ? 'text-white/45' : 'text-white/30')}>
                             {formatTime(new Date(msg.timestamp))}
                           </span>
                           {isMe && <MessageStatus status={msg.status} />}
-                          {msg.networkMode !== 'internet' && (
-                            <NetworkBadge mode={msg.networkMode} className="scale-75 origin-right" />
-                          )}
                         </div>
                       </div>
                     </>
@@ -248,38 +225,38 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
 
         {chatMessages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full py-16 text-center">
-            <div className="text-5xl mb-4">
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              className="text-5xl mb-4"
+            >
               {isSaved ? '🔖' : chat.avatarEmoji ?? '💬'}
-            </div>
-            <p className="text-surface-300 font-medium">
+            </motion.div>
+            <p className="text-white/40 font-medium text-sm">
               {isSaved ? 'Ваши заметки' : `Начните общение с ${name}`}
             </p>
-            <p className="text-surface-500 text-sm mt-1">
-              {isSaved
-                ? 'Сохраняйте сообщения и заметки'
-                : 'Напишите первое сообщение'}
+            <p className="text-white/20 text-xs mt-1">
+              {isSaved ? 'Сохраняйте сообщения и заметки' : 'Напишите первое сообщение'}
             </p>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
       {isReadOnly ? (
-        <div className="glass border-t border-surface-800/50 px-4 py-3 safe-bottom">
-          <div className="flex items-center justify-center gap-2 text-surface-500 text-sm">
+        <div className="glass border-t border-white/[0.05] px-4 py-3 safe-bottom flex-shrink-0">
+          <div className="flex items-center justify-center gap-2 text-white/30 text-sm">
             <Lock size={14} />
             <span>Это канал — писать сюда нельзя</span>
           </div>
         </div>
       ) : (
-        <div className="glass border-t border-surface-800/50 px-3 py-2.5 safe-bottom">
+        <div className="glass border-t border-white/[0.05] px-3 py-2.5 safe-bottom flex-shrink-0">
           <div className="flex items-end gap-2">
-            <button className="btn-ghost p-2 flex-shrink-0 mb-0.5">
+            <button className="btn-ghost p-2 flex-shrink-0 mb-0.5 text-white/40 hover:text-white/70">
               <Paperclip size={20} />
             </button>
-
             <div className="flex-1 relative">
               <textarea
                 ref={inputRef}
@@ -291,34 +268,37 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
                 className="input-field resize-none py-2.5 pr-10 max-h-32 overflow-y-auto"
                 style={{ lineHeight: '1.5' }}
               />
-              <button className="absolute right-3 bottom-2.5 text-surface-400 hover:text-surface-200 transition-colors">
+              <button className="absolute right-3 bottom-2.5 text-white/25 hover:text-white/50 transition-colors">
                 <Smile size={18} />
               </button>
             </div>
-
             <AnimatePresence mode="wait">
               {text.trim() ? (
                 <motion.button
                   key="send"
-                  initial={{ scale: 0.7, opacity: 0 }}
+                  initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  transition={{ duration: 0.15, ease: [0.34,1.56,0.64,1] }}
                   onClick={handleSend}
-                  className="w-10 h-10 bg-primary-500 hover:bg-primary-400 rounded-full flex items-center justify-center flex-shrink-0 shadow-glow transition-colors mb-0.5"
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5 transition-all active:scale-90"
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                    boxShadow: '0 0 20px rgba(124,58,237,0.5)',
+                  }}
                 >
-                  <Send size={18} className="text-white ml-0.5" />
+                  <Send size={17} className="text-white ml-0.5" />
                 </motion.button>
               ) : (
                 <motion.button
                   key="mic"
-                  initial={{ scale: 0.7, opacity: 0 }}
+                  initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="w-10 h-10 bg-surface-800 hover:bg-surface-700 rounded-full flex items-center justify-center flex-shrink-0 transition-colors mb-0.5"
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
-                  <Mic size={18} className="text-surface-300" />
+                  <Mic size={18} className="text-white/40" />
                 </motion.button>
               )}
             </AnimatePresence>

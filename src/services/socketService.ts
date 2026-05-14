@@ -1,17 +1,24 @@
 import { io, Socket } from 'socket.io-client'
 
+const SERVER_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+
 let socket: Socket | null = null
+let messageCallback: ((data: any) => void) | null = null
+let typingCallback: ((data: any) => void) | null = null
+let onlineCallback: ((data: any) => void) | null = null
+let offlineCallback: ((data: any) => void) | null = null
 
 export const socketService = {
-  connect: (serverUrl: string, token: string) => {
+  connect: (token: string) => {
     if (socket?.connected) return socket
 
-    socket = io(serverUrl, {
+    socket = io(SERVER_URL, {
       auth: { token },
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      transports: ['websocket', 'polling'],
     })
 
     socket.on('connect', () => {
@@ -22,8 +29,24 @@ export const socketService = {
       console.log('❌ WebSocket отключен')
     })
 
-    socket.on('error', (error) => {
-      console.error('WebSocket ошибка:', error)
+    socket.on('connect_error', (err) => {
+      console.warn('WebSocket ошибка:', err.message)
+    })
+
+    socket.on('message:receive', (data) => {
+      messageCallback?.(data)
+    })
+
+    socket.on('user:typing', (data) => {
+      typingCallback?.(data)
+    })
+
+    socket.on('user:online', (data) => {
+      onlineCallback?.(data)
+    })
+
+    socket.on('user:offline', (data) => {
+      offlineCallback?.(data)
     })
 
     return socket
@@ -36,45 +59,40 @@ export const socketService = {
     }
   },
 
-  getSocket: () => socket,
+  isConnected: () => socket?.connected ?? false,
 
   // Отправить сообщение
-  sendMessage: (chatId: string, message: string) => {
-    socket?.emit('message:send', { chatId, message })
+  sendMessage: (chatId: string, message: string, recipientId: string) => {
+    socket?.emit('message:send', { chatId, message, recipientId })
   },
 
-  // Слушать входящие сообщения
-  onMessage: (callback: (data: any) => void) => {
-    socket?.on('message:receive', callback)
+  // Присоединиться к чату
+  joinChat: (chatId: string) => {
+    socket?.emit('chat:join', chatId)
   },
 
-  // Слушать статус доставки
-  onMessageStatus: (callback: (data: any) => void) => {
-    socket?.on('message:status', callback)
-  },
-
-  // Слушать печать
-  onTyping: (callback: (data: any) => void) => {
-    socket?.on('user:typing', callback)
-  },
-
-  // Отправить статус печати
+  // Статус печати
   sendTyping: (chatId: string) => {
     socket?.emit('user:typing', { chatId })
   },
 
-  // Слушать звонки
-  onCall: (callback: (data: any) => void) => {
-    socket?.on('call:incoming', callback)
-  },
+  // Колбэки
+  onMessage: (cb: (data: any) => void) => { messageCallback = cb },
+  onTyping: (cb: (data: any) => void) => { typingCallback = cb },
+  onUserOnline: (cb: (data: any) => void) => { onlineCallback = cb },
+  onUserOffline: (cb: (data: any) => void) => { offlineCallback = cb },
 
-  // Ответить на звонок
-  answerCall: (callId: string) => {
-    socket?.emit('call:answer', { callId })
+  // Звонки
+  initiateCall: (recipientId: string, callData: any) => {
+    socket?.emit('call:initiate', { recipientId, callData })
   },
-
-  // Отклонить звонок
-  rejectCall: (callId: string) => {
-    socket?.emit('call:reject', { callId })
+  answerCall: (callerId: string) => {
+    socket?.emit('call:answer', { callerId })
+  },
+  rejectCall: (callerId: string) => {
+    socket?.emit('call:reject', { callerId })
+  },
+  onCall: (cb: (data: any) => void) => {
+    socket?.on('call:incoming', cb)
   },
 }

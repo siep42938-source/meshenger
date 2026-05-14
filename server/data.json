@@ -1,25 +1,5 @@
 {
-  "users": {
-    "+79515334391": {
-      "id": "a000ff93-d895-423d-8088-40c9e68de31e",
-      "phone": "+79515334391",
-      "name": "иуеф",
-      "createdAt": "2026-05-13T17:39:45.918Z",
-      "loginAttempts": 0,
-      "lockedUntil": null,
-      "lastLoginAt": null,
-      "lastLoginIp": null
-    }
-  },
-  "sessions": {
-    "c2c6318136e82f232572fb0f00397eaab3972fe5b993cf88fb8d9ca02cbe4a9d63fdece3a21199fe30b30ed9fc3d8b86": {
-      "userId": "a000ff93-d895-423d-8088-40c9e68de31e",
-      "phone": "+79515334391",
-      "ip": "::ffff:127.0.0.1",
-      "createdAt": "2026-05-13T17:39:45.920Z",
-      "lastUsedAt": "2026-05-13T17:39:45.920Z",
-      "expiresAt": 1781285985920
-    }
-  },
+  "users": {},
+  "sessions": {},
   "otps": {}
 }

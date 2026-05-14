@@ -13,6 +13,7 @@ import { useChatStore } from '../../store/chatStore'
 import { useAuthStore } from '../../store/authStore'
 import { useThemeStore } from '../../store/themeStore'
 import { networkService } from '../../services/networkService'
+import { socketService } from '../../services/socketService'
 
 export type GlobalModal = 'settings' | 'profile' | 'createGroup' | 'createChannel' | 'admin' | null
 
@@ -33,6 +34,30 @@ export const MainLayout: React.FC = () => {
     networkService.detectAndConnect().then(m => setNetworkMode(m))
     return unsub
   }, [])
+
+  // Подключаем WebSocket при входе
+  useEffect(() => {
+    const token = localStorage.getItem('Umberla-session-token')
+    if (token && currentUser) {
+      socketService.connect(token)
+
+      // Слушаем входящие сообщения
+      socketService.onMessage((data) => {
+        const { chatId, userId, message, timestamp } = data
+        if (userId === currentUser.id) return // своё сообщение уже добавлено
+        useChatStore.getState().receiveMessage(chatId, userId, message, timestamp)
+      })
+
+      // Онлайн статус
+      socketService.onUserOnline(({ userId }) => {
+        useChatStore.getState().setContactOnline(userId, true)
+      })
+      socketService.onUserOffline(({ userId }) => {
+        useChatStore.getState().setContactOnline(userId, false)
+      })
+    }
+    return () => { socketService.disconnect() }
+  }, [currentUser?.id])
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
   const closeModal = () => setModal(null)
@@ -107,7 +132,7 @@ export const MainLayout: React.FC = () => {
 
       <AnimatePresence>
         {modal === 'profile' && currentUser && (
-          <UserProfile user={currentUser} onClose={closeModal} />
+          <UserProfile user={currentUser} onClose={closeModal} isOwnProfile={true} />
         )}
       </AnimatePresence>
 

@@ -149,13 +149,14 @@ export const useAuthStore = create<AuthStore>()(
           const res = await fetch(`${API}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: auth.phone, name }),
+            body: JSON.stringify({ phone: auth.phone, name, username }),
           })
           const data = await res.json()
           if (data.success && data.token) {
             localStorage.setItem('Umberla-session-token', data.token)
             // Используем ID с сервера если есть
             if (data.user?.id) user.id = data.user.id
+            if (data.user?.username) user.username = data.user.username
           }
         } catch (err) {
           console.error('register error:', err)

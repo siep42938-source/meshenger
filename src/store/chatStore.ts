@@ -12,6 +12,8 @@ interface ChatStore {
   setNetworkMode: (mode: NetworkMode) => void
   setActiveChat: (id: string | null) => void
   sendMessage: (chatId: string, text: string, senderId: string) => void
+  receiveMessage: (chatId: string, senderId: string, text: string, timestamp?: string) => void
+  setContactOnline: (userId: string, online: boolean) => void
   markRead: (chatId: string) => void
   addContact: (user: User) => void
   createDirectChat: (contactId: string, currentUserId: string) => string
@@ -226,6 +228,37 @@ export const useChatStore = create<ChatStore>()(
       markRead: (chatId) =>
         set(s => ({
           chats: s.chats.map(c => c.id === chatId ? { ...c, unreadCount: 0 } : c),
+        })),
+
+      receiveMessage: (chatId, senderId, text, timestamp) => {
+        const { networkMode, activeChatId } = get()
+        const msg: Message = {
+          id: generateId(),
+          chatId,
+          senderId,
+          text,
+          timestamp: timestamp ? new Date(timestamp) : new Date(),
+          status: 'delivered',
+          networkMode,
+        }
+        set(s => ({
+          messages: {
+            ...s.messages,
+            [chatId]: [...(s.messages[chatId] || []), msg],
+          },
+          chats: s.chats.map(c =>
+            c.id === chatId
+              ? { ...c, lastMessage: msg, unreadCount: activeChatId === chatId ? 0 : c.unreadCount + 1 }
+              : c
+          ),
+        }))
+      },
+
+      setContactOnline: (userId, online) =>
+        set(s => ({
+          contacts: s.contacts.map(c =>
+            c.id === userId ? { ...c, status: online ? 'online' : 'offline' } : c
+          ),
         })),
 
       addContact: (user) =>
