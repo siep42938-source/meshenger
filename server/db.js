@@ -193,10 +193,81 @@ function searchUsers(query, excludePhone) {
     }))
 }
 
+// ─── Chats ────────────────────────────────────────────────────────────────────
+
+function getOrCreateDirectChat(userIdA, userIdB) {
+  const db = load()
+  if (!db.chats) db.chats = {}
+
+  // Ищем существующий личный чат между двумя пользователями
+  const existing = Object.values(db.chats).find(c =>
+    c.type === 'direct' &&
+    c.participants.includes(userIdA) &&
+    c.participants.includes(userIdB)
+  )
+  if (existing) return existing
+
+  const chatId = 'chat-' + crypto.randomUUID()
+  const chat = {
+    id: chatId,
+    type: 'direct',
+    participants: [userIdA, userIdB],
+    createdAt: new Date().toISOString(),
+  }
+  db.chats[chatId] = chat
+  save(db)
+  return chat
+}
+
+function getChatsByUser(userId) {
+  const db = load()
+  if (!db.chats) return []
+  return Object.values(db.chats).filter(c =>
+    c.participants && c.participants.includes(userId)
+  )
+}
+
+function getChatById(chatId) {
+  const db = load()
+  if (!db.chats) return null
+  return db.chats[chatId] || null
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+
+function saveMessage(chatId, senderId, text) {
+  const db = load()
+  if (!db.messages) db.messages = {}
+  if (!db.messages[chatId]) db.messages[chatId] = []
+
+  const msg = {
+    id: crypto.randomUUID(),
+    chatId,
+    senderId,
+    text,
+    timestamp: new Date().toISOString(),
+    status: 'delivered',
+  }
+  db.messages[chatId].push(msg)
+  save(db)
+  return msg
+}
+
+function getMessages(chatId, limit = 100) {
+  const db = load()
+  if (!db.messages || !db.messages[chatId]) return []
+  const msgs = db.messages[chatId]
+  return msgs.slice(-limit)
+}
+
 module.exports = {
   getUser, createUser, updateUser, isPhoneRegistered,
   saveOtp, getOtp, deleteOtp, incrementOtpAttempts,
   createSession, getSession, deleteSession, getUserSessions,
   recordFailedLogin, isAccountLocked, recordSuccessfulLogin,
   searchUsers,
+  // Chats
+  getOrCreateDirectChat, getChatsByUser, getChatById,
+  // Messages
+  saveMessage, getMessages,
 }

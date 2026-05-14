@@ -485,6 +485,43 @@ app.get('/api/users/search', requireAuth, (req, res) => {
   res.json({ users: results })
 })
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/chats — получить все чаты пользователя
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/chats', requireAuth, (req, res) => {
+  const chats = db.getChatsByUser(req.user.id)
+  res.json({ chats })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/chats/direct — создать или получить личный чат
+// ═══════════════════════════════════════════════════════════════════════════════
+app.post('/api/chats/direct', requireAuth, (req, res) => {
+  const { recipientId } = req.body
+  if (!recipientId) return res.status(400).json({ error: 'Укажите recipientId' })
+
+  const chat = db.getOrCreateDirectChat(req.user.id, recipientId)
+  res.json({ chat })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/messages/:chatId — получить историю сообщений
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/messages/:chatId', requireAuth, (req, res) => {
+  const { chatId } = req.params
+  const limit = parseInt(req.query.limit) || 100
+
+  // Проверяем что пользователь является участником чата
+  const chat = db.getChatById(chatId)
+  if (!chat) return res.status(404).json({ error: 'Чат не найден' })
+  if (!chat.participants.includes(req.user.id)) {
+    return res.status(403).json({ error: 'Нет доступа к этому чату' })
+  }
+
+  const messages = db.getMessages(chatId, limit)
+  res.json({ messages })
+})
+
 const PORT = process.env.PORT || 3001
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
@@ -525,15 +562,16 @@ io.on('connection', (socket) => {
     console.log(`💬 Сообщение от ${socket.phone}: ${message}`)
     
     // Сохраняем в БД
-    db.saveMessage(chatId, socket.userId, message)
+    const saved = db.saveMessage(chatId, socket.userId, message)
     
     // Отправляем отправителю подтверждение
     socket.emit('message:receive', {
       chatId,
+      id: saved.id,
       userId: socket.userId,
       phone: socket.phone,
       message,
-      timestamp: new Date(),
+      timestamp: saved.timestamp,
       status: 'sent',
     })
 
@@ -543,10 +581,11 @@ io.on('connection', (socket) => {
       if (recipientSocketId) {
         io.to(recipientSocketId).emit('message:receive', {
           chatId,
+          id: saved.id,
           userId: socket.userId,
           phone: socket.phone,
           message,
-          timestamp: new Date(),
+          timestamp: saved.timestamp,
           status: 'delivered',
         })
         // Уведомляем отправителя о доставке
@@ -556,10 +595,11 @@ io.on('connection', (socket) => {
       // Групповой чат — отправляем всем в комнате кроме отправителя
       socket.to(chatId).emit('message:receive', {
         chatId,
+        id: saved.id,
         userId: socket.userId,
         phone: socket.phone,
         message,
-        timestamp: new Date(),
+        timestamp: saved.timestamp,
         status: 'delivered',
       })
     }

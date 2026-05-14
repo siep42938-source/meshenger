@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const NewChatModal: React.FC<Props> = ({ onClose, onOpenChat }) => {
-  const { contacts, createDirectChat, addContact } = useChatStore()
+  const { contacts, createDirectChat, createOrGetDirectChat, addContact } = useChatStore()
   const { currentUser } = useAuthStore()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<User[]>([])
@@ -61,12 +61,12 @@ export const NewChatModal: React.FC<Props> = ({ onClose, onOpenChat }) => {
     setResults(contacts)
   }, [])
 
-  const handleSelect = (contact: User) => {
+  const handleSelect = async (contact: User) => {
     // Добавляем в локальные контакты если ещё нет
     const exists = contacts.find(c => c.id === contact.id)
     if (!exists) addContact(contact)
 
-    const chatId = createDirectChat(contact.id, currentUser?.id ?? 'me')
+    const chatId = await createOrGetDirectChat(contact.id)
     onOpenChat(chatId)
     onClose()
   }

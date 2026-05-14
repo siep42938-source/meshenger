@@ -20,7 +20,7 @@ interface ChatWindowProps {
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
-  const { chats, messages, contacts, sendMessage, networkMode } = useChatStore()
+  const { chats, messages, contacts, sendMessage, networkMode, loadMessages } = useChatStore()
   const { currentUser } = useAuthStore()
   const [text, setText] = useState('')
   const [showInfo, setShowInfo] = useState(false)
@@ -29,6 +29,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
 
   const chat = chats.find(c => c.id === chatId)
   const chatMessages = messages[chatId] ?? []
+
+  // Загружаем историю с сервера при открытии чата
+  useEffect(() => {
+    if (chatId && !chatId.startsWith('umbrella') && !chatId.startsWith('saved')) {
+      loadMessages(chatId)
+    }
+  }, [chatId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Chat, Message, User, NetworkMode } from '../types'
+import { useAuthStore } from './authStore'
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('Umberla-session-token')
+  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
+}
 
 interface ChatStore {
   chats: Chat[]
@@ -17,6 +25,8 @@ interface ChatStore {
   markRead: (chatId: string) => void
   addContact: (user: User) => void
   createDirectChat: (contactId: string, currentUserId: string) => string
+  createOrGetDirectChat: (recipientId: string) => Promise<string>
+  loadMessages: (chatId: string) => Promise<void>
   createGroup: (name: string, memberIds: string[], currentUserId: string, color: string) => string
   createChannel: (name: string, description: string, isPublic: boolean, currentUserId: string, color: string) => string
   addChannelAdmin: (chatId: string, userId: string, rights: import('../types').AdminRights) => void
@@ -281,6 +291,66 @@ export const useChatStore = create<ChatStore>()(
         }
         set(s => ({ chats: [chat, ...s.chats] }))
         return chatId
+      },
+
+      createOrGetDirectChat: async (recipientId: string): Promise<string> => {
+        try {
+          const res = await fetch(`${API}/chats/direct`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ recipientId }),
+          })
+          if (!res.ok) throw new Error('Server error')
+          const data = await res.json()
+          const serverChat = data.chat
+          // Синхронизируем с локальным store
+          set(s => {
+            const exists = s.chats.find(c => c.id === serverChat.id)
+            if (exists) return s
+            const contact = s.contacts.find(c => c.id === recipientId)
+            const chat: Chat = {
+              id: serverChat.id,
+              type: 'direct',
+              participants: serverChat.participants,
+              unreadCount: 0,
+              avatarColor: contact?.avatarColor || AVATAR_COLORS[0],
+            }
+            return { chats: [chat, ...s.chats] }
+          })
+          return serverChat.id
+        } catch {
+          // Fallback на локальное создание
+          const { currentUser } = useAuthStore.getState()
+          return get().createDirectChat(recipientId, currentUser?.id ?? 'me')
+        }
+      },
+
+      loadMessages: async (chatId: string): Promise<void> => {
+        try {
+          const res = await fetch(`${API}/messages/${encodeURIComponent(chatId)}`, {
+            headers: getAuthHeaders(),
+          })
+          if (!res.ok) return
+          const data = await res.json()
+          const serverMessages: Message[] = (data.messages || []).map((m: any) => ({
+            id: m.id,
+            chatId: m.chatId,
+            senderId: m.senderId,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+            status: (m.status || 'delivered') as Message['status'],
+            networkMode: 'internet' as NetworkMode,
+          }))
+          if (serverMessages.length === 0) return
+          set(s => ({
+            messages: {
+              ...s.messages,
+              [chatId]: serverMessages,
+            },
+          }))
+        } catch {
+          // Тихо игнорируем — используем локальные сообщения
+        }
       },
 
       createGroup: (name, memberIds, currentUserId, color) => {
