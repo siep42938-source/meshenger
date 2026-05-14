@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AuthState, User } from '../types'
 
-const API = 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 interface AuthStore {
   auth: AuthState
