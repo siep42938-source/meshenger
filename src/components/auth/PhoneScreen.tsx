@@ -27,6 +27,7 @@ export const PhoneScreen: React.FC = () => {
   const [showCountries, setShowCountries] = useState(false)
   const [loading, setLoading] = useState(false)
   const [countrySearch, setCountrySearch] = useState('')
+  const [phoneStatus, setPhoneStatus] = useState<'new' | 'exists' | null>(null)
 
   const dialCode = '+' + getCountryCallingCode(country.code as any)
 
@@ -79,7 +80,10 @@ export const PhoneScreen: React.FC = () => {
     setLoading(true)
     const fullPhone = dialCode + phone.replace(/\D/g, '')
     setPhone(fullPhone, dialCode)
-    await sendOtp(fullPhone, 'dev', '')
+    const result = await sendOtp(fullPhone, 'dev', '')
+    if (result.isRegistered !== undefined) {
+      setPhoneStatus(result.isRegistered ? 'exists' : 'new')
+    }
     setLoading(false)
   }
 
@@ -240,9 +244,7 @@ export const PhoneScreen: React.FC = () => {
               <div
                 className="px-3 py-2 rounded-xl text-xs flex items-center gap-2"
                 style={{
-                  background: validation.valid
-                    ? 'rgba(52,211,153,0.08)'
-                    : 'rgba(248,113,113,0.08)',
+                  background: validation.valid ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
                   border: `1px solid ${validation.valid ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}`,
                   color: validation.valid ? '#6ee7b7' : '#fca5a5',
                 }}
@@ -261,6 +263,31 @@ export const PhoneScreen: React.FC = () => {
           )}
         </AnimatePresence>
 
+        {/* Статус номера после отправки */}
+        <AnimatePresence>
+          {phoneStatus && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div
+                className="px-3 py-2.5 rounded-xl text-xs text-center font-medium"
+                style={{
+                  background: phoneStatus === 'exists' ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.08)',
+                  border: `1px solid ${phoneStatus === 'exists' ? 'rgba(251,191,36,0.3)' : 'rgba(52,211,153,0.2)'}`,
+                  color: phoneStatus === 'exists' ? '#fbbf24' : '#6ee7b7',
+                }}
+              >
+                {phoneStatus === 'exists'
+                  ? '⚠️ Этот номер уже зарегистрирован — вы войдёте в существующий аккаунт'
+                  : '✅ Новый аккаунт — код отправлен'}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <button
           type="submit"
           disabled={loading || !validation?.valid}
@@ -268,14 +295,13 @@ export const PhoneScreen: React.FC = () => {
         >
           {loading
             ? <Loader2 size={20} className="animate-spin" />
-            : <>Получить код <ArrowRight size={18} /></>
+            : <>{phoneStatus === 'exists' ? 'Войти' : 'Получить код'} <ArrowRight size={18} /></>
           }
         </button>
       </motion.form>
 
       <p className="text-xs text-center mt-6 max-w-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-        Продолжая, вы соглашаетесь с условиями использования.
-        Один номер — один аккаунт.
+        Код придёт в Telegram боту @umbrellaSup_bot
       </p>
     </motion.div>
   )

@@ -38,25 +38,36 @@ export const MainLayout: React.FC = () => {
   // Подключаем WebSocket при входе
   useEffect(() => {
     const token = localStorage.getItem('Umberla-session-token')
-    if (token && currentUser) {
-      socketService.connect(token)
+    if (!token || !currentUser) return
 
-      // Слушаем входящие сообщения
-      socketService.onMessage((data) => {
-        const { chatId, userId, message, timestamp } = data
-        if (userId === currentUser.id) return // своё сообщение уже добавлено
-        useChatStore.getState().receiveMessage(chatId, userId, message, timestamp)
-      })
+    socketService.connect(token)
 
-      // Онлайн статус
-      socketService.onUserOnline(({ userId }) => {
-        useChatStore.getState().setContactOnline(userId, true)
-      })
-      socketService.onUserOffline(({ userId }) => {
-        useChatStore.getState().setContactOnline(userId, false)
-      })
+    // Слушаем входящие сообщения
+    socketService.onMessage((data) => {
+      const { chatId, userId, message, timestamp } = data
+      if (userId === currentUser.id) return // своё сообщение уже добавлено локально
+      // Добавляем сообщение в чат
+      useChatStore.getState().receiveMessage(chatId, userId, message, timestamp)
+    })
+
+    // Онлайн статус
+    socketService.onUserOnline(({ userId }) => {
+      useChatStore.getState().setContactOnline(userId, true)
+    })
+    socketService.onUserOffline(({ userId }) => {
+      useChatStore.getState().setContactOnline(userId, false)
+    })
+
+    // Ping каждые 25 секунд чтобы Render не засыпал
+    const pingInterval = setInterval(() => {
+      fetch(`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'}/api/health`)
+        .catch(() => {})
+    }, 25000)
+
+    return () => {
+      clearInterval(pingInterval)
+      socketService.disconnect()
     }
-    return () => { socketService.disconnect() }
   }, [currentUser?.id])
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024

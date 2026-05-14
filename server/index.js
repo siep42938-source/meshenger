@@ -559,17 +559,16 @@ io.on('connection', (socket) => {
   // Отправить сообщение
   socket.on('message:send', (data) => {
     const { chatId, message, recipientId } = data
-    console.log(`💬 Сообщение от ${socket.phone}: ${message}`)
+    console.log(`💬 Сообщение от ${socket.phone} в чат ${chatId}: ${message}`)
     
     // Сохраняем в БД
     const saved = db.saveMessage(chatId, socket.userId, message)
     
-    // Отправляем отправителю подтверждение
+    // Подтверждение отправителю
     socket.emit('message:receive', {
       chatId,
       id: saved.id,
       userId: socket.userId,
-      phone: socket.phone,
       message,
       timestamp: saved.timestamp,
       status: 'sent',
@@ -583,21 +582,18 @@ io.on('connection', (socket) => {
           chatId,
           id: saved.id,
           userId: socket.userId,
-          phone: socket.phone,
           message,
           timestamp: saved.timestamp,
           status: 'delivered',
         })
-        // Уведомляем отправителя о доставке
-        socket.emit('message:delivered', { chatId, userId: socket.userId })
+        socket.emit('message:delivered', { chatId, messageId: saved.id })
       }
     } else {
-      // Групповой чат — отправляем всем в комнате кроме отправителя
+      // Групповой чат
       socket.to(chatId).emit('message:receive', {
         chatId,
         id: saved.id,
         userId: socket.userId,
-        phone: socket.phone,
         message,
         timestamp: saved.timestamp,
         status: 'delivered',

@@ -99,15 +99,43 @@ export const OtpScreen: React.FC = () => {
         transition={{ delay: 0.1, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
         className="mb-6 flex flex-col items-center gap-3"
       >
-        <div className="w-20 h-20 rounded-3xl bg-surface-800 border border-surface-700/50 flex items-center justify-center text-4xl">
+        <div
+          className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(91,33,182,0.3))',
+            border: '1px solid rgba(124,58,237,0.3)',
+            boxShadow: '0 0 24px rgba(124,58,237,0.2)',
+          }}
+        >
           💬
         </div>
         <div className="text-center">
           <h2 className="text-xl font-bold text-white">Введите код</h2>
-          <p className="text-surface-400 text-sm mt-1">
+          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
             Код отправлен на{' '}
             <span className="text-white font-medium">{formatPhone(auth.phone)}</span>
           </p>
+          <div
+            className="mt-3 px-4 py-2.5 rounded-2xl text-xs text-center"
+            style={{
+              background: 'rgba(124,58,237,0.1)',
+              border: '1px solid rgba(124,58,237,0.25)',
+              color: '#a78bfa',
+            }}
+          >
+            📱 Код придёт в Telegram бот{' '}
+            <a
+              href="https://t.me/umbrellaSup_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+              style={{ color: '#c4b5fd' }}
+            >
+              @umbrellaSup_bot
+            </a>
+            <br />
+            <span style={{ color: 'rgba(255,255,255,0.35)' }}>Откройте бот и нажмите /start</span>
+          </div>
         </div>
       </motion.div>
 

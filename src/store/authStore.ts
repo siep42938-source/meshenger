@@ -8,7 +8,7 @@ interface AuthStore {
   auth: AuthState
   currentUser: User | null
   devCode: string | null
-  sendOtp: (phone: string, method?: string, contact?: string) => Promise<{ success: boolean }>
+  sendOtp: (phone: string, method?: string, contact?: string) => Promise<{ success: boolean; isRegistered?: boolean }>
   verifyOtp: (code: string) => Promise<{ valid: boolean; error?: string }>
   setPhone: (phone: string, countryCode: string) => void
   setProfile: (name: string) => void
@@ -44,16 +44,15 @@ export const useAuthStore = create<AuthStore>()(
             body: JSON.stringify({ phone, method, contact }),
           })
           const data = await res.json()
-          if (!data.success) return { success: false }
+          if (!data.success) return { success: false, isRegistered: false }
           set(s => ({ auth: { ...s.auth, step: 'otp', otpSentAt: new Date() } }))
-          return { success: true }
+          return { success: true, isRegistered: data.isRegistered }
         } catch (err) {
           console.error('send-otp error:', err)
-          // Офлайн fallback — переходим к OTP экрану
           set(s => ({
             auth: { ...s.auth, step: 'otp', otpSentAt: new Date() } as any,
           }))
-          return { success: true }
+          return { success: true, isRegistered: false }
         }
       },
 

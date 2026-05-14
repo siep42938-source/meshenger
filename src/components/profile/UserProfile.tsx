@@ -27,6 +27,8 @@ export const UserProfile: React.FC<Props> = ({ user, chatId, onClose, onMessage,
   const [editName, setEditName] = useState(user.name)
   const [editBio, setEditBio] = useState(user.bio || '')
   const [editUsername, setEditUsername] = useState(user.username || '')
+  const [avatar, setAvatar] = useState<string | null>(user.avatar || null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const copy = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text).catch(() => {})
@@ -44,10 +46,30 @@ export const UserProfile: React.FC<Props> = ({ user, chatId, onClose, onMessage,
       name: editName.trim() || user.name,
       bio: editBio.trim(),
       username: editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '') || user.username,
+      avatar: avatar || undefined,
     })
     setEditing(false)
   }
 
+  const handlePhotoClick = () => {
+    if (isOwnProfile) fileInputRef.current?.click()
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Файл слишком большой. Максимум 5MB.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      setAvatar(dataUrl)
+      updateUser({ avatar: dataUrl })
+    }
+    reader.readAsDataURL(file)
+  }
   const statusColor = user.status === 'online' ? '#4ade80' : user.status === 'away' ? '#fbbf24' : '#6b7280'
   const statusText = user.status === 'online' ? 'в сети' : user.status === 'away' ? 'недавно был(а)' : 'не в сети'
 
@@ -113,7 +135,24 @@ export const UserProfile: React.FC<Props> = ({ user, chatId, onClose, onMessage,
             {/* Avatar */}
             <div className="flex justify-center mb-3 mt-2">
               <div className="relative">
-                <Avatar name={user.name} color={user.avatarColor} size="xl" />
+                {/* Скрытый input для загрузки фото */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                {(avatar || user.avatar) ? (
+                  <img
+                    src={avatar || user.avatar}
+                    alt={user.name}
+                    className="w-20 h-20 rounded-full object-cover"
+                    style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+                  />
+                ) : (
+                  <Avatar name={user.name} color={user.avatarColor} size="xl" />
+                )}
                 <div
                   className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2"
                   style={{
@@ -124,8 +163,9 @@ export const UserProfile: React.FC<Props> = ({ user, chatId, onClose, onMessage,
                 />
                 {isOwnProfile && (
                   <button
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(124,58,237,0.8)', border: '2px solid rgba(10,14,26,0.97)' }}
+                    onClick={handlePhotoClick}
+                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-90"
+                    style={{ background: 'rgba(124,58,237,0.9)', border: '2px solid rgba(10,14,26,0.97)' }}
                   >
                     <Camera size={12} className="text-white" />
                   </button>
