@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1520" />
+  <title>Установить Umberla</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #0d1520;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: #1a2535;
+      border: 1px solid #2d3f55;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .badge {
+      background: #7c3aed;
+      color: white;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .step-text strong {
+      color: #e2e8f0;
+    }
+
+    .step-icon {
+      font-size: 18px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 16px;
+      text-decoration: none;
+      margin-top: 8px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+      transition: opacity 0.2s;
+    }
+
+    .btn:active { opacity: 0.85; }
+
+    .btn-secondary {
+      background: #1a2535;
+      border: 1px solid #2d3f55;
+      color: #94a3b8;
+      font-size: 15px;
+      box-shadow: none;
+      margin-top: 12px;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      color: #475569;
+      font-size: 13px;
+      margin: 8px 0;
+      position: relative;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: #2d3f55;
+    }
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+
+    .note {
+      font-size: 13px;
+      color: #475569;
+      text-align: center;
+      margin-top: 24px;
+      line-height: 1.6;
+    }
+
+    .android-note {
+      background: #1a2535;
+      border: 1px solid #2d3f55;
+      border-radius: 16px;
+      padding: 16px 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 8px;
+    }
+
+    .android-note p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .android-note strong {
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <img src="/icons/apple-touch-icon.png" alt="Umberla" class="logo" onerror="this.src='/icons/icon-192.png'" />
+  <h1>Umberla</h1>
+  <p class="subtitle">Мессенджер, который работает везде —<br>с интернетом и без</p>
+
+  <!-- iOS инструкция -->
+  <div class="card" id="ios-card">
+    <div class="card-title">
+      <span>📱 Установка на iPhone / iPad</span>
+      <span class="badge">iOS</span>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          Откройте эту страницу в <strong>Safari</strong>
+          <br><small style="color:#64748b">Chrome и другие браузеры не поддерживают установку</small>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          Нажмите кнопку <strong>«Поделиться»</strong> <span class="step-icon">⬆️</span> внизу экрана
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          Выберите <strong>«На экран "Домой"»</strong> <span class="step-icon">➕</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">
+          Нажмите <strong>«Добавить»</strong> — иконка Umberla появится на рабочем столе
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="btn" id="open-btn">🚀 Открыть Umberla</a>
+
+  <div class="divider">или</div>
+
+  <!-- Android -->
+  <div class="android-note">
+    <p><strong>Android?</strong> Нажмите <strong>«Установить приложение»</strong> в меню браузера (⋮) или откройте сайт в Chrome — он предложит установку автоматически.</p>
+  </div>
+
+  <a href="https://t.me/UmberlaBot" class="btn btn-secondary">💬 Открыть бота в Telegram</a>
+
+  <p class="note">
+    Umberla работает как нативное приложение.<br>
+    Не требует App Store. Обновляется автоматически.
+  </p>
+
+  <script>
+    // Определяем платформу и показываем нужную инструкцию
+    const ua = navigator.userAgent
+    const isIOS = /iPad|iPhone|iPod/.test(ua)
+    const isAndroid = /Android/.test(ua)
+    const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua)
+
+    if (isIOS && !isSafari) {
+      // iOS но не Safari — предупреждаем
+      const note = document.createElement('div')
+      note.style.cssText = 'background:#2d1f0a;border:1px solid #92400e;border-radius:12px;padding:14px 18px;width:100%;max-width:400px;margin-bottom:16px;font-size:14px;color:#fbbf24;line-height:1.5;'
+      note.innerHTML = '⚠️ <strong>Откройте в Safari</strong><br>Для установки на iPhone нужен браузер Safari. Скопируйте ссылку и откройте в Safari.'
+      document.querySelector('.card').before(note)
+    }
+
+    // Кнопка "Открыть" — если уже установлено как PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      document.getElementById('open-btn').textContent = '✅ Приложение уже установлено'
+      document.getElementById('open-btn').href = '/'
+    }
+  </script>
+</body>
+</html>

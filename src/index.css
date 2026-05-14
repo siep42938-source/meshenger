@@ -1,0 +1,293 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables ──────────────────────────────────────────────────────── */
+:root {
+  --color-bg:      #0d1520;
+  --color-surface: #1e2a3a;
+  --color-primary: #7c3aed;
+  --color-glow:    rgba(124,58,237,0.35);
+  --color-bubble:  #7c3aed;
+  --font-size-base: 15px;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: #e8edf5;
+  font-size: var(--font-size-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+
+/* Safe areas */
+.safe-top    { padding-top: env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ─── Liquid Glass ───────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(24px) saturate(2);
+  -webkit-backdrop-filter: blur(24px) saturate(2);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 40px rgba(0,0,0,0.45);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: 16px;
+  padding: 14px 24px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(135deg, var(--color-primary), rgba(109,40,217,0.85));
+  box-shadow: 0 0 24px var(--color-glow), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  user-select: none;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px var(--color-glow), 0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-ghost {
+  color: rgba(255,255,255,0.6);
+  border-radius: 12px;
+  padding: 8px 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: none;
+}
+.btn-ghost:hover {
+  color: white;
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(8px);
+}
+
+/* ─── Input ──────────────────────────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  color: white;
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+  backdrop-filter: blur(8px);
+}
+.input-field::placeholder { color: rgba(255,255,255,0.28); }
+.input-field:focus {
+  border-color: rgba(124,58,237,0.6);
+  background: rgba(255,255,255,0.07);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.15), inset 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ─── Search input fix (icon overlap) ───────────────────────────────────── */
+.search-input {
+  padding-left: 2.5rem !important;
+}
+
+/* ─── Radio button ───────────────────────────────────────────────────────── */
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.radio-option:last-child { border-bottom: none; }
+.radio-option:hover { background: rgba(255,255,255,0.04); }
+.radio-circle {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.radio-circle.selected {
+  border-color: #7c3aed;
+  background: rgba(124,58,237,0.15);
+  box-shadow: 0 0 8px rgba(124,58,237,0.4);
+}
+.radio-circle.selected::after {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #7c3aed;
+}
+
+/* ─── Messages ───────────────────────────────────────────────────────────── */
+.message-out {
+  color: white;
+  border-radius: 20px 20px 4px 20px;
+  padding: 10px 14px;
+  max-width: 75%;
+  position: relative;
+  background: linear-gradient(135deg, var(--color-primary), rgba(109,40,217,0.85));
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 4px 16px var(--color-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.message-out::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.message-in {
+  color: rgba(255,255,255,0.9);
+  padding: 10px 14px;
+  max-width: 75%;
+  border-radius: 20px 20px 20px 4px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Avatar ─────────────────────────────────────────────────────────────── */
+.avatar {
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  user-select: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--color-bg);
+}
+
+/* ─── Badges ─────────────────────────────────────────────────────────────── */
+.unread-badge {
+  background: linear-gradient(135deg, var(--color-primary), rgba(109,40,217,0.8));
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 7px;
+  min-width: 20px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 2px 8px var(--color-glow);
+}
+
+/* ─── Network badge ──────────────────────────────────────────────────────── */
+.net-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  border: 1px solid transparent;
+}
+.net-badge.internet    { background: rgba(34,197,94,0.1);  color: #4ade80; border-color: rgba(74,222,128,0.2); }
+.net-badge.bluetooth   { background: rgba(124,58,237,0.1); color: #a78bfa; border-color: rgba(167,139,250,0.2); }
+.net-badge.wifi-direct { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.2); }
+.net-badge.offline     { background: rgba(239,68,68,0.1);  color: #f87171; border-color: rgba(248,113,113,0.2); }
+
+/* ─── OTP ────────────────────────────────────────────────────────────────── */
+.otp-input {
+  width: 48px; height: 56px;
+  text-align: center;
+  font-size: 1.4rem; font-weight: 700;
+  border-radius: 14px;
+  color: white; outline: none;
+  transition: all 0.2s;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+  backdrop-filter: blur(8px);
+}
+.otp-input:focus {
+  border-color: var(--color-primary);
+  background: rgba(124,58,237,0.1);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.2), inset 0 2px 8px rgba(0,0,0,0.1);
+}
+.otp-input.filled {
+  border-color: rgba(124,58,237,0.5);
+  background: rgba(124,58,237,0.08);
+}
+
+/* ─── Typing dots ────────────────────────────────────────────────────────── */
+.typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  animation: pulseDot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── Keyframes ──────────────────────────────────────────────────────────── */
+@keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+@keyframes slideUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+@keyframes bounceMsg { from{opacity:0;transform:scale(0.88) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes pulseDot  { 0%,80%,100%{transform:scale(0.6);opacity:.3} 40%{transform:scale(1);opacity:1} }
+
+.animate-fade-in    { animation: fadeIn 0.2s ease-out; }
+.animate-slide-up   { animation: slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+.animate-bounce-msg { animation: bounceMsg 0.32s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* ─── Performance ────────────────────────────────────────────────────────── */
+.glass, .glass-card, .message-out, .message-in, .otp-input, .input-field {
+  will-change: auto;
+}
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

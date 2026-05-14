@@ -1,0 +1,43 @@
+services:
+  # ─── Backend (Node.js сервер) ─────────────────────────────────────────────
+  - type: web
+    name: umberla-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: node index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false   # задать вручную в Render Dashboard
+      - key: ADMIN_TELEGRAM_ID
+        sync: false
+      - key: APP_URL
+        sync: false   # URL фронтенда после деплоя
+      - key: WEBHOOK_URL
+        sync: false   # URL этого сервера (заполнится после деплоя)
+      - key: SOURCE_URL
+        value: https://github.com/umberla/messenger
+
+  # ─── Frontend (React PWA) ─────────────────────────────────────────────────
+  - type: web
+    name: umberla-app
+    runtime: static
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
